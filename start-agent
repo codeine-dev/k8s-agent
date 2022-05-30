@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+mkdir -p ~/.ssh
+
+[ ! -f "~/.ssh/id_rsa" ] && ssh-keygen -t rsa -b 4096 -N '' <<<$'\n' || echo "Using existing keys..."
+
+cat << EOF > ~/.ssh/config
+Host codeine
+  HostName $CODEINE_SSH_SERVER
+  Port $CODEINE_SSH_PORT
+  RemoteForward 443 $CODEINE_K8S_API_HOST:$CODEINE_K8S_API_PORT
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PubkeyAcceptedKeyTypes +ssh-rsa
+EOF
+
+ssh "${CLUSTER_ID}@codeine"

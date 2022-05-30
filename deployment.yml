@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-agent
+spec:
+  selector:
+    matchLabels:
+      app: k8s-agent
+  template:
+    metadata:
+      labels:
+        app: k8s-agent
+    spec:
+      # hostNetwork: true
+      containers:
+      - name: k8s-agent
+        image: richbayliss/k8s-agent:latest
+        imagePullPolicy: Always
+        env:
+          - name: CLUSTER_ID
+            value: richardb
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
