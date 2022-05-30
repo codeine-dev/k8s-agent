@@ -14,7 +14,7 @@ spec:
       # hostNetwork: true
       containers:
       - name: k8s-agent
-        image: richbayliss/k8s-agent:latest
+        image: ghcr.io/codeine-dev/k8s-agent:master
         imagePullPolicy: Always
         env:
           - name: CLUSTER_ID
