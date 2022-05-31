@@ -12,6 +12,7 @@ Host codeine
   UserKnownHostsFile /dev/null
   StrictHostKeyChecking no
   PubkeyAcceptedKeyTypes +ssh-rsa
+  ServerAliveInterval 30
 EOF
 
 ssh "${CLUSTER_ID}@codeine"
