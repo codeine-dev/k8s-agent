@@ -1,5 +1,33 @@
 #!/usr/bin/env bash
 
+COMMON_NAME=k8s-agent
+CANAME=k8s-agent-ca
+mkdir -p /data/$CANAME
+
+function buildCA {
+  cd /data/$CANAME
+  openssl genrsa -out $CANAME.key 4096
+  openssl req -x509 -new -nodes -key $CANAME.key -sha256 -days 1826 -out $CANAME.crt -subj '/CN=Codeine K8s Agent CA/C=AT/ST=Graz/L=Graz/O=Codeine'
+}
+
+function buildCert {
+  cd /data/$CANAME
+  openssl req -new -nodes -out $COMMON_NAME.csr -newkey rsa:4096 -keyout $COMMON_NAME.key -subj '/CN=k8s-agent/C=AT/ST=Graz/L=Graz/O=Codeine'
+  
+  # create a v3 ext file for SAN properties
+  cat > $COMMON_NAME.v3.ext << EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = localhost
+IP.1 = 127.0.0.1
+EOF
+
+  openssl x509 -req -in $COMMON_NAME.csr -CA $CANAME.crt -CAkey $CANAME.key -CAcreateserial -out $COMMON_NAME.crt -days 730 -sha256 -extfile $COMMON_NAME.v3.ext
+}
+
 mkdir -p ~/.ssh
 
 cat << EOF > ~/.ssh/config
@@ -17,8 +45,12 @@ EOF
 mkdir -p /data
 [ ! -f "/data/id_rsa" ] && ssh-keygen -f /data/id_rsa -t rsa -b 4096 -N '' <<<$'\n' || echo "Using existing keys..."
 
-ssh "${CLUSTER_ID}@codeine" &
+[ ! -f "/data/${CANAME}/${CANAME}.key" ] && buildCA || echo "Using existing CA..."
+[ ! -f "/data/${CANAME}/${COMMON_NAME}.key" ] && buildCert || echo "Using existing certs..."
 
+
+caddy start --config /etc/caddy/Caddyfile
+ssh "${CLUSTER_ID}@codeine" &
 kubectl proxy --disable-filter &
 
 wait -n

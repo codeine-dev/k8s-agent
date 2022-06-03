@@ -1,0 +1,6 @@
+localhost:6443 {
+    tls /data/k8s-agent-ca/k8s-agent.crt /data/k8s-agent-ca/k8s-agent.key {
+        ca_root /data/k8s-agent-ca/k8s-agent-ca.crt
+    }
+    reverse_proxy http://localhost:8001
+}
