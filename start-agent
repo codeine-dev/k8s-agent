@@ -2,17 +2,25 @@
 
 mkdir -p ~/.ssh
 
-[ ! -f "~/.ssh/id_rsa" ] && ssh-keygen -t rsa -b 4096 -N '' <<<$'\n' || echo "Using existing keys..."
-
 cat << EOF > ~/.ssh/config
 Host codeine
   HostName $CODEINE_SSH_SERVER
   Port $CODEINE_SSH_PORT
-  RemoteForward 443 $CODEINE_K8S_API_HOST:$CODEINE_K8S_API_PORT
+  IdentityFile /data/id_rsa
+  RemoteForward 443 localhost:8001
   UserKnownHostsFile /dev/null
   StrictHostKeyChecking no
   PubkeyAcceptedKeyTypes +ssh-rsa
   ServerAliveInterval 30
 EOF
 
-ssh "${CLUSTER_ID}@codeine"
+mkdir -p /data
+[ ! -f "/data/id_rsa" ] && ssh-keygen -f /data/id_rsa -t rsa -b 4096 -N '' <<<$'\n' || echo "Using existing keys..."
+
+ssh "${CLUSTER_ID}@codeine" &
+
+kubectl proxy --disable-filter &
+
+wait -n
+
+exit $?
