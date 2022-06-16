@@ -1,1 +1,4 @@
 /data/
+/out/
+build/
+node_modules/
